@@ -32,7 +32,7 @@ Radio radio(Pins::Radio::ChipSelect, //radio
             Pins::Radio::DIO0,
             433.0,
             Bandwidth_125000_Hz,
-            SpreadingFactor_9,
+            SpreadingFactor_10,
             CodingRate_4_8);
 
 void setup() {
@@ -63,24 +63,18 @@ bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,
 
 void loop() {
 
-if(bmp.readAltitude(groundpressure) > 100){
+if(flightmode == false && bmp.readAltitude(groundpressure) > 100){
   flightmode = true;
   digitalWrite(led, LOW);
+  digitalWrite(buzzer, HIGH);
 }
 
 while(Serial.available()) {
   parser.encode((char)Serial.read());
 }
-
-if(flightmode){
-  digitalWrite(buzzer, HIGH);
-}
-
 SDsave();
 radioTransmit();
 delay(500);
-digitalWrite(buzzer, LOW);
-
 }
 
 
@@ -128,8 +122,8 @@ void onGgaUpdate(nmea::GgaData const gga)
     longi = String(gga.longitude, 4);
     lati = String(gga.latitude, 4);
   }else{
-    longi = "";
-    lati = "";
+    longi = "invd";
+    lati = "invd";
   }
 
 }
