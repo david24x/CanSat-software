@@ -35,14 +35,14 @@ void onGgaUpdate(nmea::GgaData const);
 //declaring some stuff
 ArduinoNmeaParser parser(onRmcUpdate, onGgaUpdate);
 RBD::LightSensor light_sensor(A5);
-#define buzzer 7
+#define buzzer 5
 #define led 9
 DHT11 dht11(2); //humidity sensor
 Adafruit_BMP280 bmp; //temperature and pressure sensor
 Frame frame; // radio frame to hold the data
 Radio radio(Pins::Radio::ChipSelect, //radio
             Pins::Radio::DIO0,
-            433.0,
+            433.6,
             Bandwidth_125000_Hz,
             SpreadingFactor_9,
             CodingRate_4_8);
@@ -65,19 +65,25 @@ bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,
 
 
 File dataFile = SD.open("ESSA2K24.txt", FILE_WRITE);
-dataFile.println("Time: Temp[*C]: Press[Pa]: Alt[m]: Light[%]: Humid[%]:"); //SD card file header 
+dataFile.println("Temp[*C]: Press[Pa]: Light[%]: Humid[%]:"); //SD card file header 
 dataFile.close();
 
 groundpressure = bmp.readPressure()/100; // reading pressure for flightmode and landingmode enabling purposes
 
-while(issue){
+if(issue){
+for(int i = 0; i<=10; i++){
 digitalWrite(led, HIGH);
+tone(buzzer, 2000);
 delay(250);                     //led indicating sensors issue
 digitalWrite(led, LOW);
+noTone(buzzer);
 delay(250);
 }
-
+}
 digitalWrite(led, HIGH); //led indicating readiness for flight
+tone(buzzer, 2000);
+delay(500);
+noTone(buzzer);
 radio.transmit("CANSAT INIT COMPLETE, FLY HIGH ESSA!");
 }
 
@@ -98,9 +104,9 @@ while(Serial.available()) {
 
 
 if(landingmode==true && bov%2==0){
-  digitalWrite(buzzer, HIGH);
+  tone(buzzer, 2000);
 }else{                               //buzzer buzzing loop
-  digitalWrite(buzzer, LOW);
+  noTone(buzzer);
 }
 SDsave();
 radioTransmit();
@@ -109,7 +115,7 @@ delay(500);
 
 
 
-void radioTransmit(){
+void radioTransmit() {
   frame.print(bmp.readTemperature());
   frame.print(" ");
   frame.print(bmp.readPressure());
@@ -125,7 +131,7 @@ void radioTransmit(){
   frame.clear();
 }
 
-void SDsave(){
+void SDsave() {
   File dataFile = SD.open("ESSA2K24.txt", FILE_WRITE);
   if (dataFile) {
     dataFile.print(bmp.readTemperature());
@@ -146,8 +152,8 @@ void onGgaUpdate(nmea::GgaData const gga)
     longi = String(gga.longitude, 4);
     lati = String(gga.latitude, 4);
   }else{                                          //gps data parsing
-    longi = "invd";
-    lati = "invd";
+    longi = "-";
+    lati = "-";
   }
 
 }
